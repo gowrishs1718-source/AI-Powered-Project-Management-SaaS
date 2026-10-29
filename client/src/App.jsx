@@ -1,10 +1,9 @@
 
-
-
+import { useState } from "react";
 import "./App.css";
 
 function App() {
-  const projects = [
+  const [projects, setProjects] = useState([
     {
       id: 1,
       name: "Website Redesign",
@@ -26,13 +25,46 @@ function App() {
       progress: 25,
       color: "#e6a23c",
     },
-  ];
+  ]);
+
+  const [projectName, setProjectName] = useState("");
+  const [showForm, setShowForm] = useState(false);
+
+  function handleAddProject(event) {
+    event.preventDefault();
+
+    const name = projectName.trim();
+
+    if (name === "") {
+      return;
+    }
+
+    const newProject = {
+      id: Date.now(),
+      name: name,
+      category: "New Project",
+      progress: 0,
+      color: "#7c5cff",
+    };
+
+    setProjects([...projects, newProject]);
+    setProjectName("");
+    setShowForm(false);
+  }
+  
+function handleDeleteProject(projectId) {
+  const updatedProjects = projects.filter(
+    (project) => project.id !== projectId
+  );
+
+  setProjects(updatedProjects);
+}
+
 
   return (
     <div className="app-layout">
       <aside className="sidebar">
         <h2 className="brand">TaskFlow<span>.</span></h2>
-
         <p className="menu-label">WORKSPACE</p>
 
         <nav>
@@ -44,9 +76,6 @@ function App() {
           </a>
           <a className="nav-link" href="#tasks">
             ✓ My Tasks
-          </a>
-          <a className="nav-link" href="#team">
-            ♧ Team
           </a>
         </nav>
 
@@ -63,40 +92,63 @@ function App() {
         <header className="topbar">
           <div>
             <p className="eyebrow">WORKSPACE / OVERVIEW</p>
-            <h1>Good evening! 👋</h1>
+            <h1>Welcome to TaskFlow! 👋</h1>
             <p className="subtitle">
-              Here's what's happening with your projects.
+              Manage and track your projects.
             </p>
           </div>
 
-          <button className="primary-button">
+          <button
+            className="primary-button"
+            onClick={() => setShowForm(!showForm)}
+          >
             + New Project
           </button>
         </header>
 
+        {showForm && (
+          <form className="project-form" onSubmit={handleAddProject}>
+            <label htmlFor="projectName">Project name</label>
+
+            <input
+              id="projectName"
+              type="text"
+              placeholder="Enter your project name"
+              value={projectName}
+              onChange={(event) =>
+                setProjectName(event.target.value)
+              }
+            />
+
+            <button className="primary-button" type="submit">
+              Add Project
+            </button>
+          </form>
+        )}
+
         <section className="stats-grid" id="tasks">
           <div className="stat-card">
             <p>Total Projects</p>
-            <h2>12</h2>
-            <span>Across your workspace</span>
+            <h2>{projects.length}</h2>
+            <span>Projects in your workspace</span>
           </div>
 
           <div className="stat-card">
             <p>Active Tasks</p>
             <h2>24</h2>
-            <span>Tasks in progress</span>
+            <span>Sample statistic</span>
           </div>
 
           <div className="stat-card">
             <p>Completed</p>
             <h2>86</h2>
-            <span>Tasks finished</span>
+            <span>Sample statistic</span>
           </div>
 
           <div className="stat-card">
             <p>Team Members</p>
             <h2>08</h2>
-            <span>Collaborating together</span>
+            <span>Sample statistic</span>
           </div>
         </section>
 
@@ -104,9 +156,8 @@ function App() {
           <div className="section-heading">
             <div>
               <h2>Your Projects</h2>
-              <p>Track progress across your workspace.</p>
+              <p>Track your project progress.</p>
             </div>
-            <a href="#projects">View all →</a>
           </div>
 
           <div className="projects-grid">
@@ -119,11 +170,23 @@ function App() {
                   >
                     ◆
                   </span>
-                  <span className="project-status">In progress</span>
+
+                  <span className="project-status">
+                    {project.progress === 100
+                      ? "Completed"
+                      : "In progress"}
+                  </span>
                 </div>
 
                 <p className="category">{project.category}</p>
                 <h3>{project.name}</h3>
+                
+              <button
+                className="delete-button"
+                onClick={() => handleDeleteProject(project.id)}
+              >
+                Delete Project
+              </button>
 
                 <div className="progress-label">
                   <span>Progress</span>
@@ -144,9 +207,7 @@ function App() {
           </div>
         </section>
 
-        <footer>
-          TaskFlow © 2026 · Built with React
-        </footer>
+        <footer>TaskFlow © 2026 · Built with React</footer>
       </main>
     </div>
   );
