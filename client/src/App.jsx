@@ -1,65 +1,137 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 function App() {
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      name: "Website Redesign",
-      category: "Design",
-      progress: 75,
-      color: "#7c5cff",
-    },
-    {
-      id: 2,
-      name: "SaaS Dashboard",
-      category: "Development",
-      progress: 45,
-      color: "#159d91",
-    },
-    {
-      id: 3,
-      name: "AI Integration",
-      category: "Artificial Intelligence",
-      progress: 25,
-      color: "#e6a23c",
-    },
-  ]);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  
+useEffect(() => {
+  async function fetchProjects() {
+    try {
+      const response = await fetch("http://localhost:5000/api/projects");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch projects");
+      }
+
+      const data = await response.json();
+
+      setProjects(data.projects);
+    } catch (error) {
+      console.log("Error:", error.message);
+      setError("Unable to load projects from backend");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchProjects();
+}, []);
+
 
   const [projectName, setProjectName] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState(null);
+  
+async function handleSaveProject(event) {
+  event.preventDefault();
 
-  function handleAddProject(event) {
-    event.preventDefault();
+  const name = projectName.trim();
 
-    const name = projectName.trim();
+  if (name === "") {
+    return;
+  }
 
-    if (name === "") {
-      return;
+  try {
+    // EDIT existing project
+    if (editingProjectId !== null) {
+      const response = await fetch(
+        `http://localhost:5000/api/projects/${editingProjectId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: name }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update project");
+      }
+
+      setProjects((previousProjects) =>
+        previousProjects.map((project) =>
+          project.id === editingProjectId
+            ? data.project
+            : project
+        )
+      );
+    } 
+
+    // ADD new project
+    else {
+      const response = await fetch(
+        "http://localhost:5000/api/projects",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: name }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create project");
+      }
+
+      setProjects((previousProjects) => [
+        ...previousProjects,
+        data.project,
+      ]);
     }
 
-    const newProject = {
-      id: Date.now(),
-      name: name,
-      category: "New Project",
-      progress: 0,
-      color: "#7c5cff",
-    };
-
-    setProjects([...projects, newProject]);
+    // Reset form
     setProjectName("");
     setShowForm(false);
+    setEditingProjectId(null);
+
+  } catch (error) {
+    console.log("Error:", error.message);
+    setError(error.message);
   }
-  
-function handleDeleteProject(projectId) {
-  const updatedProjects = projects.filter(
-    (project) => project.id !== projectId
-  );
-
-  setProjects(updatedProjects);
 }
+async function handleDeleteProject(projectId) {
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/projects/${projectId}`,
+      {
+        method: "DELETE",
+      }
+    );
 
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to delete project");
+    }
+
+    setProjects((previousProjects) =>
+      previousProjects.filter((project) => project.id !== projectId)
+    );
+
+  } catch (error) {
+    console.log("Delete error:", error.message);
+    setError(error.message);
+  }
+}
 
   return (
     <div className="app-layout">
@@ -100,15 +172,21 @@ function handleDeleteProject(projectId) {
 
           <button
             className="primary-button"
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              setProjectName("");
+              setEditingProjectId(null);
+              setShowForm(!showForm);
+            }}
           >
             + New Project
           </button>
         </header>
 
         {showForm && (
-          <form className="project-form" onSubmit={handleAddProject}>
-            <label htmlFor="projectName">Project name</label>
+          <form className="project-form" onSubmit={handleSaveProject}>
+           <label htmlFor="projectName">
+            {editingProjectId !== null ? "Edit Project Name" : "Project name"}
+          </label>
 
             <input
               id="projectName"
@@ -121,7 +199,17 @@ function handleDeleteProject(projectId) {
             />
 
             <button className="primary-button" type="submit">
-              Add Project
+              {editingProjectId !== null ? "Update Project" : "Add Project"}
+            </button>
+            <button
+              type="button" className="cancel-button"
+              onClick={() => {
+                setShowForm(false);
+                setProjectName("");
+                setEditingProjectId(null);
+              }}
+              >
+                Cancel
             </button>
           </form>
         )}
@@ -152,6 +240,11 @@ function handleDeleteProject(projectId) {
           </div>
         </section>
 
+
+        {loading && <p>Loading projects...</p>}
+        {error && <p>{error}</p>}
+
+
         <section className="projects-section" id="projects">
           <div className="section-heading">
             <div>
@@ -180,9 +273,19 @@ function handleDeleteProject(projectId) {
 
                 <p className="category">{project.category}</p>
                 <h3>{project.name}</h3>
+                <button
+                  className="edit-button"  type="button"
+                  onClick={() => {
+                    setProjectName(project.name);
+                    setEditingProjectId(project.id);
+                    setShowForm(true);
+                  }}
+                >
+                  Edit Project
+                </button>
                 
               <button
-                className="delete-button"
+                className="delete-button"  type="button"
                 onClick={() => handleDeleteProject(project.id)}
               >
                 Delete Project

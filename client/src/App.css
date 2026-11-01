@@ -30,3 +30,61 @@
   outline: 2px solid #7654ed;
   border-color: #7654ed;
 }
+css
+/* Common button styling */
+.edit-button,
+.delete-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease,
+              color 0.2s ease,
+              transform 0.2s ease;
+  margin-right: 8px;
+}
+
+/* Edit button */
+.edit-button {
+  background: #6c4cf1;
+  color: #ffffff;
+  border: 1px solid #6c4cf1;
+}
+
+.edit-button:hover {
+  background: #5738d5;
+  border-color: #5738d5;
+  transform: translateY(-2px);
+}
+
+/* Delete button */
+.delete-button {
+  background: #ffffff;
+  color: #e5484d;
+  border: 1px solid #ffcaca;
+}
+
+.delete-button:hover {
+  background: #fff0f0;
+  border-color: #e5484d;
+  transform: translateY(-2px);
+}
+.cancel-button {
+  padding: 10px 16px;
+  border: 1px solid #dcdce5;
+  border-radius: 8px;
+  background: white;
+  color: #555;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background: #f3f3f7;
+}
